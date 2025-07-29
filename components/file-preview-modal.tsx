@@ -110,7 +110,7 @@ export function FilePreviewModal({ file, isOpen, onClose }: FilePreviewModalProp
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="flex-shrink-0 mt-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <DialogTitle className="truncate">{file.name}</DialogTitle>
@@ -120,9 +120,6 @@ export function FilePreviewModal({ file, isOpen, onClose }: FilePreviewModalProp
               <Button variant="outline" size="sm" onClick={downloadFile}>
                 <Download className="h-4 w-4 mr-2" />
                 ดาวน์โหลด
-              </Button>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -140,7 +137,7 @@ export function FilePreviewModal({ file, isOpen, onClose }: FilePreviewModalProp
                   <img
                     src={previewContent || "/placeholder.svg"}
                     alt={file.name}
-                    className="max-w-full max-h-full object-contain"
+                    className="max-w-full max-h-[60vh]"
                     crossOrigin="anonymous"
                   />
                 </div>
