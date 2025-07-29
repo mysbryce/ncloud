@@ -127,70 +127,85 @@ function SortDropdown({
 }
 
 // API functions
-const api = {
-  async getFiles(path = "/"): Promise<FileSystemItem[]> {
-    const response = await fetch(`/api/files?path=${encodeURIComponent(path)}`)
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.details || "Failed to fetch files")
-    }
-    return response.json()
-  },
-
-  async createFile(file: Omit<FileSystemItem, "id" | "last_modified">): Promise<FileSystemItem> {
-    const response = await fetch("/api/files", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        path: file.path,
-        mimeType: file.mime_type,
-        content: file.content,
-      }),
-    })
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.details || "Failed to create file")
-    }
-    return response.json()
-  },
-
-  async deleteFile(id: string): Promise<void> {
-    const response = await fetch(`/api/files?id=${id}`, {
-      method: "DELETE",
-    })
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.details || "Failed to delete file")
-    }
-  },
-
-  async getAuditLogs(): Promise<AuditEntry[]> {
-    try {
-      const response = await fetch("/api/audit")
-      if (!response.ok) return []
+  const api = {
+    async getFiles(path = "/"): Promise<FileSystemItem[]> {
+      const response = await fetch(`/api/files?path=${encodeURIComponent(path)}`)
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.details || "Failed to fetch files")
+      }
       return response.json()
-    } catch {
-      return []
-    }
-  },
+    },
 
-  async createAuditLog(log: Omit<AuditEntry, "id" | "timestamp">): Promise<AuditEntry | null> {
-    try {
-      const response = await fetch("/api/audit", {
+    async createFile(file: Omit<FileSystemItem, "id" | "last_modified">): Promise<FileSystemItem> {
+      const response = await fetch("/api/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(log),
+        body: JSON.stringify({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          path: file.path,
+          mimeType: file.mime_type,
+          content: file.content,
+        }),
       })
-      if (!response.ok) return null
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.details || "Failed to create file")
+      }
       return response.json()
-    } catch {
-      return null
-    }
-  },
-}
+    },
+
+    async deleteFile(id: string): Promise<void> {
+      const response = await fetch(`/api/files?id=${id}`, {
+        method: "DELETE",
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.details || "Failed to delete file")
+      }
+    },
+
+    async moveFile(itemId: string, targetPath: string): Promise<void> {
+      const response = await fetch("/api/files/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId,
+          targetPath,
+        }),
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.details || "Failed to move file")
+      }
+    },
+
+    async getAuditLogs(): Promise<AuditEntry[]> {
+      try {
+        const response = await fetch("/api/audit")
+        if (!response.ok) return []
+        return response.json()
+      } catch {
+        return []
+      }
+    },
+
+    async createAuditLog(log: Omit<AuditEntry, "id" | "timestamp">): Promise<AuditEntry | null> {
+      try {
+        const response = await fetch("/api/audit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(log),
+        })
+        if (!response.ok) return null
+        return response.json()
+      } catch {
+        return null
+      }
+    },
+  }
 
 export function FileExplorer() {
   const { toast } = useToast()
@@ -469,6 +484,36 @@ export function FileExplorer() {
     }
   }
 
+  const moveItem = async (itemId: string, targetPath: string) => {
+    try {
+      const item = items.find((i) => i.id === itemId)
+      if (!item) return
+
+      await api.moveFile(itemId, targetPath)
+      
+      // Remove item from current view since it's been moved
+      setItems((prev) => prev.filter((i) => i.id !== itemId))
+      
+      await addAuditEntry("MOVE", `Moved ${item.type}: ${item.name} to ${targetPath}`)
+
+      if (toast) {
+        toast({
+          title: "สำเร็จ",
+          description: `ย้าย${item.type === "folder" ? "โฟลเดอร์" : "ไฟล์"} "${item.name}" สำเร็จ`,
+        })
+      }
+    } catch (error) {
+      console.error("Failed to move item:", error)
+      if (toast) {
+        toast({
+          title: "ข้อผิดพลาด",
+          description: "ย้ายรายการไม่สำเร็จ",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
   // Sort function
   const sortItems = (items: FileSystemItem[]) => {
     return [...items].sort((a, b) => {
@@ -663,6 +708,8 @@ export function FileExplorer() {
                     viewMode={viewMode}
                     onNavigate={navigateToPath}
                     onDelete={deleteItem}
+                    onMove={moveItem}
+                    currentPath={currentPath}
                   />
                 ))}
               </div>

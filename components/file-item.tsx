@@ -40,6 +40,8 @@ interface FileItemProps {
   viewMode: "grid" | "list"
   onNavigate: (path: string) => void
   onDelete: (id: string) => void
+  onMove?: (itemId: string, targetPath: string) => void
+  currentPath?: string
 }
 
 const getFileIcon = (mimeType?: string, fileName?: string) => {
@@ -153,9 +155,11 @@ function DropdownMenuItem({
   )
 }
 
-export function FileItem({ item, viewMode, onNavigate, onDelete }: FileItemProps) {
+export function FileItem({ item, viewMode, onNavigate, onDelete, onMove, currentPath = "/" }: FileItemProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const handleClick = () => {
     if (item.type === "folder") {
@@ -206,13 +210,78 @@ export function FileItem({ item, viewMode, onNavigate, onDelete }: FileItemProps
     }
   }
 
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation()
+    setIsDragging(true)
+    e.dataTransfer.setData("text/plain", JSON.stringify({
+      id: item.id,
+      name: item.name,
+      type: item.type,
+      path: item.path
+    }))
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (item.type === "folder") {
+      setIsDragOver(true)
+      e.dataTransfer.dropEffect = "move"
+    }
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+
+    if (item.type !== "folder") return
+
+    try {
+      const draggedData = JSON.parse(e.dataTransfer.getData("text/plain"))
+      
+      // Don't allow dropping on itself
+      if (draggedData.id === item.id) return
+
+      // Don't allow dropping a folder into its own subfolder
+      if (draggedData.type === "folder" && item.path.startsWith(draggedData.path)) return
+
+      if (onMove) {
+        onMove(draggedData.id, item.path)
+      }
+    } catch (error) {
+      console.error("Error parsing drag data:", error)
+    }
+  }
+
   const IconComponent = item.type === "folder" ? Folder : getFileIcon(item.mime_type, item.name)
   const showThumbnail = isImageWithContent(item)
 
   if (viewMode === "list") {
     return (
       <>
-        <Card className="hover:bg-muted/50 transition-colors">
+        <Card 
+          className={`hover:bg-muted/50 transition-colors ${isDragging ? 'opacity-50' : ''} ${isDragOver ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
+          draggable
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3 flex-1 cursor-pointer" onClick={handleClick}>
@@ -269,10 +338,16 @@ export function FileItem({ item, viewMode, onNavigate, onDelete }: FileItemProps
   return (
     <>
       <Card
-        className="hover:bg-muted/50 transition-all duration-200 cursor-pointer group relative"
+        className={`hover:bg-muted/50 transition-all duration-200 cursor-pointer group relative ${isDragging ? 'opacity-50' : ''} ${isDragOver ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={handleClick}
+        draggable
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         <CardContent className="p-4">
           <div className="flex flex-col items-center space-y-2">
