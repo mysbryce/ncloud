@@ -1,81 +1,82 @@
-# 🚀 NCloud - LAN File Server
+# NCloud - Local File Storage System
 
-A rapid, self-hostable, and open-source solution designed for fast file storage and sharing within your local area network (LAN).
+A modern file management system built with Next.js, featuring local file storage and drag-and-drop functionality.
 
------
+## Features
 
-## ✨ Features
+- **Local File Storage**: Files are stored in the `/upload/` directory instead of a database
+- **Drag and Drop**: Move files and folders by dragging them to other folders
+- **Audit Logging**: All actions are logged to JSON files in the upload directory
+- **File Preview**: Preview images, text files, and other supported formats
+- **Upload Progress**: Real-time upload progress with cancellation support
+- **Search and Sort**: Find files quickly with search and multiple sort options
+- **Responsive Design**: Works on desktop and mobile devices
 
-  * **⚡️ Blazing Fast:** Optimized for quick file transfers within your LAN environment.
-  * **🏠 Self-Hostable:** Easily deploy and manage your own file server on your preferred hardware.
-  * **🌐 Open Source:** Transparent, customizable, and community-driven. Feel free to inspect, modify, and contribute\!
-  * **🔒 Local Network Focus:** Built specifically for secure and efficient file sharing without relying on external cloud services.
+## File Storage Structure
 
------
+```
+upload/
+├── metadata.json          # File metadata and structure
+├── audit-log.json         # Audit logs
+├── files/                 # Actual uploaded files
+└── folders/              # Created folders
+```
 
-## 💡 Why use this?
+## Audit Logging
 
-This project provides a straightforward and efficient way to create a dedicated file storage server for your home or office network. Say goodbye to slow cloud uploads or cumbersome USB transfers – keep your files accessible and speedy right where you need them.
+All user actions are automatically logged to `upload/audit-log.json` with:
+- Timestamp
+- IP address (mocked)
+- MAC address (mocked)
+- Action type
+- Details
 
------
+## Drag and Drop
 
-## 🚀 Getting Started
+- **Drag files/folders**: Click and drag any file or folder
+- **Drop on folders**: Drop items onto folder icons to move them
+- **Visual feedback**: Folders highlight when you drag over them
+- **Validation**: Prevents invalid moves (e.g., dropping a folder into itself)
 
-To get your own LAN File Server up and running, follow these general steps. Please replace the placeholders with actual commands relevant to your project's technology (e.g., Node.js, Python, Docker, etc.).
+## API Endpoints
 
-### Prerequisites
+- `GET /api/files?path=/` - List files in a directory
+- `POST /api/files` - Create new file or folder
+- `DELETE /api/files?id=...` - Delete file or folder
+- `POST /api/files/move` - Move file/folder to new location
+- `GET /api/audit` - Get audit logs
+- `POST /api/audit` - Create audit log entry
 
-  * [List any required software, e.g., Node.js v16+, Docker, Python 3.8+]
-      * Example: `Node.js (LTS version)`
+## Development
 
-### Installation
+```bash
+# Install dependencies
+pnpm install
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/mysbryce/ncloud.git
-    cd ncloud
-    ```
-2.  **Install dependencies:**
-    ```bash
-    pnpm install
-    ```
-3.  **Configuration:**
-    ```bash
-    # .env
-    DATABASE_URL="YOUR_DATABASE_URL"
-    ```
+# Start development server
+pnpm dev
 
------
+# Build for production
+pnpm build
+```
 
-## 💻 Usage
+## Environment Variables
 
-Once the server is installed and configured, you can start it and access your files.
+No external database required - all data is stored locally in the upload directory.
 
-1.  **Start the server:**
-    ```bash
-    pnpm start
-    ```
-2.  **Access the server:**
-      * Once running, the server should be accessible on your local network.
-      * Explain how users can access it (e.g., via web browser at `http://YOUR_SERVER_IP:PORT`, as a network drive, etc.).
-      * Example: Open your web browser and navigate to `http://<YOUR_SERVER_IP_ADDRESS>:<PORT_NUMBER>` (e.g., `http://192.168.1.100:3000`).
+## File Types Supported
 
------
+- Images (JPG, PNG, GIF, SVG, WebP)
+- Videos (MP4, AVI, MOV, WMV, FLV)
+- Audio (MP3, WAV, FLAC, AAC)
+- Documents (PDF, XLSX, XLS, CSV)
+- Code files (JS, TS, JSX, TSX, HTML, CSS, PY, Java, C++, C)
+- Archives (ZIP, RAR, 7Z, TAR, GZ)
+- Text files (TXT, MD, JSON)
 
-## 🤝 Contributing
+## Security Notes
 
-Contributions are always welcome\! If you have suggestions, bug reports, or want to contribute code, please feel free to:
-
-1.  Fork the repository.
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4.  Push to the branch (`git push origin feature/AmazingFeature`).
-5.  Open a Pull Request.
-
-Please ensure your code adheres to the project's coding style and includes appropriate tests.
-
------
-
-## 📄 License
-
-This project is licensed under the [MIT License](https://www.google.com/search?q=LICENSE) - see the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+- Files are stored locally in the upload directory
+- No external database dependencies
+- Audit logs are stored as JSON files
+- File paths are validated to prevent directory traversal
