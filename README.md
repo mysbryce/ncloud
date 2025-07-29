@@ -2,6 +2,8 @@
 
 A modern file management system built with Next.js, featuring local file storage and drag-and-drop functionality.
 
+![NCloud Preview](https://i.ibb.co/C50rFcJg/ncloud-preview.png)
+
 ## Features
 
 - **Local File Storage**: Files are stored in the `/upload/` directory instead of a database
